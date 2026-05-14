@@ -1,1 +1,133 @@
-<iframe src="path/to/mind_map.html" width="100%" height="800px" frameborder="0"></iframe>
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ментальна карта: Управління знаннями</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root { --tg-theme-bg-color: #f8fafc; --tg-theme-text-color: #1e293b; }
+        body { background-color: var(--tg-theme-bg-color); color: var(--tg-theme-text-color); overflow-x: hidden; font-family: system-ui, -apple-system, sans-serif; }
+        .mind-map-container { display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; padding-bottom: 100px; }
+        .node { padding: 10px 15px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); transition: all 0.2s; cursor: pointer; text-align: center; font-weight: 600; font-size: 0.85rem; }
+        .node:active { transform: scale(0.95); }
+        .central-node { background: linear-gradient(135deg, #1e293b, #334155); color: white; font-size: 1rem; padding: 16px; }
+        .branch-node { color: white; margin-bottom: 8px; }
+        .sub-node { background: white; color: #475569; border: 1px solid #e2e8f0; font-weight: 400; font-size: 0.75rem; }
+        .nature { background-color: #3b82f6; }
+        .seci { background-color: #8b5cf6; }
+        .barriers { background-color: #ef4444; }
+        .motivation { background-color: #10b981; }
+        .culture { background-color: #f59e0b; }
+        #ai-panel { position: fixed; bottom: 0; left: 0; right: 0; height: 40vh; background: white; box-shadow: 0 -4px 15px rgba(0,0,0,0.1); border-top-left-radius: 20px; border-top-right-radius: 20px; padding: 20px; z-index: 100; transform: translateY(100%); transition: transform 0.3s ease; display: flex; flex-direction: column; }
+        #ai-panel.open { transform: translateY(0); }
+        .ai-btn { font-size: 0.65rem; background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px; margin-top: 4px; }
+        #settings-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
+        #settings-modal.active { display: flex; }
+    </style>
+</head>
+<body>
+
+<div class="fixed top-4 right-4 z-50 flex gap-2">
+    <button onclick="toggleSettings()" class="bg-white p-2 rounded-full shadow-md text-xl">⚙️</button>
+</div>
+
+<div id="settings-modal">
+    <div class="bg-white p-6 rounded-2xl w-full max-w-sm text-black">
+        <h3 class="text-lg font-bold mb-4">Налаштування ШІ</h3>
+        <p class="text-sm text-gray-500 mb-4">Введіть ваш Gemini API Key для роботи функцій ШІ.</p>
+        <input type="password" id="api-key-input" placeholder="AIza..." class="w-full p-3 border rounded-xl mb-4 text-sm">
+        <div class="flex gap-2">
+            <button onclick="saveApiKey()" class="flex-1 bg-blue-600 text-white p-3 rounded-xl font-bold">Зберегти</button>
+            <button onclick="toggleSettings()" class="flex-1 bg-gray-100 p-3 rounded-xl">Скасувати</button>
+        </div>
+    </div>
+</div>
+
+<div id="ai-panel">
+    <div class="flex justify-between items-center mb-4">
+        <h3 id="ai-title" class="font-bold text-slate-800">ШІ-відповідь</h3>
+        <button onclick="closeAI()" class="text-gray-400 text-xl">✕</button>
+    </div>
+    <div id="ai-content" class="flex-1 overflow-y-auto text-sm text-slate-600 leading-relaxed pb-4 text-black">
+        Оберіть вузол або натисніть ✨ для генерації.
+    </div>
+    <div id="ai-loader" class="hidden text-xs text-blue-600 font-medium animate-pulse">Gemini думає...</div>
+</div>
+
+<div class="mind-map-container">
+    <div class="flex flex-col items-center gap-8 w-full">
+        <div class="node central-node w-full max-w-[280px]" onclick="explainNode('Управління знаннями')">
+            Психологія управління знаннями
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
+            <div class="flex flex-col gap-3">
+                <div class="node branch-node barriers">
+                    Бар'єри
+                    <button class="ai-btn" onclick="askAI('бар\'єри', 'поради')">✨ Поради</button>
+                </div>
+                <div class="flex flex-wrap gap-2 justify-center">
+                    <div class="node sub-node" onclick="explainNode('Влада знань')">Влада знань</div>
+                    <div class="node sub-node" onclick="explainNode('Конкуренція')">Конкуренція</div>
+                    <div class="node sub-node" onclick="explainNode('Страх помилок')">Страх помилок</div>
+                </div>
+            </div>
+            <div class="flex flex-col gap-3">
+                <div class="node branch-node seci">
+                    Модель SECI
+                    <button class="ai-btn" onclick="askAI('SECI', 'поради')">✨ Впровадження</button>
+                </div>
+                <div class="flex flex-wrap gap-2 justify-center">
+                    <div class="node sub-node" onclick="explainNode('Соціалізація')">Соціалізація</div>
+                    <div class="node sub-node" onclick="explainNode('Екстерналізація')">Екстерналізація</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+    let userApiKey = localStorage.getItem('gemini_api_key') || "";
+    function toggleSettings() { document.getElementById('settings-modal').classList.toggle('active'); }
+    function saveApiKey() {
+        const val = document.getElementById('api-key-input').value;
+        localStorage.setItem('gemini_api_key', val);
+        userApiKey = val;
+        toggleSettings();
+    }
+    function openAI(title) { document.getElementById('ai-title').innerText = title; document.getElementById('ai-panel').classList.add('open'); }
+    function closeAI() { document.getElementById('ai-panel').classList.remove('open'); }
+    async function callGemini(prompt, system = "Експерт з психології. Відповідай українською.") {
+        if (!userApiKey) { toggleSettings(); return "Будь ласка, вкажіть API Key у налаштуваннях (⚙️)."; }
+        document.getElementById('ai-loader').classList.remove('hidden');
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${userApiKey}`;
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], systemInstruction: { parts: [{ text: system }] } })
+            });
+            const data = await response.json();
+            return data.candidates?.[0]?.content?.parts?.[0]?.text || "Помилка відповіді.";
+        } catch (e) { return "Помилка з'єднання."; } finally { document.getElementById('ai-loader').classList.add('hidden'); }
+    }
+    async function explainNode(name) {
+        openAI(name);
+        document.getElementById('ai-content').innerHTML = "Завантаження...";
+        const res = await callGemini(`Поясни термін "${name}" у контексті управління знаннями (2 речення).`);
+        document.getElementById('ai-content').innerHTML = res.replace(/\n/g, '<br>');
+    }
+    async function askAI(category, type) {
+        openAI(`Поради: ${category}`);
+        document.getElementById('ai-content').innerHTML = "Генерація...";
+        const prompt = type === 'поради' ? `Дай 3 поради як покращити "${category}".` : `3 ідеї для теми "${category}".`;
+        const res = await callGemini(prompt);
+        document.getElementById('ai-content').innerHTML = res.replace(/\n/g, '<br>');
+    }
+</script>
+</body>
+</html>
